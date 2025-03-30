@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leaflet Web Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html {margin: 0; padding: 0; height: 100%; font-family: 'Poppins', sans-serif; background: #ECF0F1;}
+    .header {background: #2C3E50; color: white; text-align: center; padding: 15px; font-size: 22px; font-weight: bold; transition: background 0.3s, transform 0.2s; border-radius: 0 0 15px 15px;}
+    .header:hover {background: #34495E; transform: scale(1.02);}
+    #map {width: 100%; height: calc(100vh - 70px); border-radius: 15px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);}
+    .leaflet-control.toolbox {background: rgba(255, 255, 255, 0.85); padding: 12px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px);}
+    .toolbox button {display: block; margin: 8px; width: 130px; padding: 10px; cursor: pointer; background: #2C3E50; color: white; border: none; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; transition: background 0.3s, transform 0.2s;}
+    .toolbox button:hover {background: #E67E22; transform: scale(1.05);}
+  </style>
+</head>
+<body>
+  <div class="header">
+    Peta Universitas Gadjah Mada | Mirdha Dhea Permata (23/512640/TK/56337)
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    // Inisialisasi peta tanpa setView langsung
+    var map = L.map('map');
+  
+    // Layer Peta
+    var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+    });
+    var satelliteMap = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; <a href="https://www.google.com/maps">Google Satellite</a>'
+    });
+    var contourMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: 'Map data: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
+    });
+    var thematicMap = L.tileLayer('https://services.terrascope.be/wmts/v2?layer=WORLDCOVER_2021_MAP&style=&tilematrixset=EPSG:3857&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix=EPSG:3857:{z}&TileCol={x}&TileRow={y}&TIME=2022-10-31', {
+      attribution: '© ESA WorldCover 2021 | Contains modified Copernicus Sentinel data (2021)'
+    });
+  
+    streetMap.addTo(map);
+  
+    // Layer control
+    var baseMaps = {
+      "🛣️ Peta Dasar": streetMap,
+      "🛰️ Peta Satelit": satelliteMap,
+      "⛰️ Peta Topografi": contourMap,
+      "🌱 Peta Tematik": thematicMap
+    };
+    L.control.layers(baseMaps).addTo(map);
+  
+    // Toolbox Panel
+    var toolbox = L.control({ position: 'topright' });
+    toolbox.onAdd = function () {
+      var div = L.DomUtil.create('div', 'leaflet-control toolbox');
+      div.innerHTML = `
+        <button onclick="map.zoomIn()">🔍 Zoom In</button>
+        <button onclick="map.zoomOut()">🔎 Zoom Out</button>
+        <button onclick="resetView()">🔄 Reset</button>
+        <button onclick="toggleFullScreen()">🖥️ Fullscreen</button>
+        <button onclick="getUserLocation()">📍 Lokasi Saya</button>
+      `;
+      return div;
+    };
+    toolbox.addTo(map);
+  
+    // Fullscreen
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  
+    // Icon
+    var customIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -35]
+    });  
+  
+    // GeoJSON Marker
+    var geojsonFeatures = {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "GIK",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.376022, -7.773393]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "GSP",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.377834, -7.770136]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Perpusat",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.377768, -7.769273]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Balairung",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.378537, -7.767677]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Stadion Pancasila",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.384835, -7.769290]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Wisdom Park",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.382597, -7.769225]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "Masjid Kampus",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.379992, -7.773373]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FT",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.372132, -7.765219]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FBIO",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.376504, -7.765448]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FGEO",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.377550, -7.766350]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FMIPA",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.376091, -7.766970]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FKKMK",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.375873, -7.767762]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FF",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.376448, -7.768834]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FKG",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.374636, -7.770279]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "SV",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.374706, -7.774156]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FIB",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.378767, -7.771364]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FPSI",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.379933, -7.772149]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FFIL",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.380783, -7.770972]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FEB",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.378911, -7.770549]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FISIPOL",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.379411, -7.769567]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FH",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.381223, -7.770117]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FAPERTA",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.380978, -7.768924]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FTP",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.379876, -7.768828]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FKT",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.380317, -7.767372]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FKH",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.384472, -7.767430]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "name": "FAPET",
+            "description": "Universitas Gadjah Mada"
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [110.385656, -7.768050]
+          }
+        },
+      ]
+    };
+  
+    // GeoJSON Marker
+    var geojsonLayer = L.geoJSON(geojsonFeatures, {
+        pointToLayer: function (feature, latlng) {
+            return L.marker(latlng, { icon: customIcon });
+        },
+        onEachFeature: function (feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>${feature.properties.description}`);
+            }
+        }
+    }).addTo(map);
+
+    // Auto-fit ke semua marker
+    map.fitBounds(geojsonLayer.getBounds(), { padding: [50, 50] });
+
+    // Reset View
+    function resetView() {
+        map.fitBounds(geojsonLayer.getBounds(), { padding: [50, 50] });
+    }
+
+    // Lokasi User
+    function getUserLocation() {
+        if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            L.marker([lat, lon], { icon: customIcon }).addTo(map)
+            .bindPopup("<b>Lokasi Anda</b>").openPopup();
+            map.setView([lat, lon], 14);
+        }, function () {
+            alert("Gagal mendapatkan lokasi.");
+        });
+        } else {
+        alert("Geolocation tidak didukung di browser ini.");
+        }
+    }
+    </script>
+</body>
+</html>
